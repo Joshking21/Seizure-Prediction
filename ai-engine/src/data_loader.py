@@ -21,20 +21,110 @@ from src.config import (
 )
 
 CHB_MIT_ANNOTATIONS: Dict[str, List[tuple]] = {
+    # chb01 (7 seizure files)
     "chb01_03": [(2996, 3036)],
     "chb01_04": [(1467, 1494)],
     "chb01_15": [(1732, 1772)],
     "chb01_16": [(1015, 1066)],
     "chb01_18": [(1720, 1810)],
-    "chb02_16": [(130,  212)],
+    "chb01_21": [(327, 420)],
+    "chb01_26": [(1862, 1963)],
+    # chb02 (3 seizure files)
+    "chb02_16": [(130, 212)],
     "chb02_16+": [(2972, 3053)],
-    "chb03_01": [(362,  414)],
-    "chb03_02": [(731,  796)],
-    "chb03_03": [(432,  501)],
+    "chb02_19": [(3369, 3378)],
+    # chb03 (7 seizure files)
+    "chb03_01": [(362, 414)],
+    "chb03_02": [(731, 796)],
+    "chb03_03": [(432, 501)],
+    "chb03_04": [(2162, 2214)],
+    "chb03_34": [(1982, 2029)],
+    "chb03_35": [(2592, 2656)],
+    "chb03_36": [(1725, 1778)],
+    # chb04 (3 seizure files)
+    "chb04_05": [(7804, 7853)],
+    "chb04_08": [(6446, 6557)],
+    "chb04_28": [(1679, 1781), (3782, 3898)],
+    # chb05 (5 seizure files)
+    "chb05_06": [(417, 532)],
+    "chb05_13": [(1086, 1196)],
+    "chb05_16": [(2317, 2413)],
+    "chb05_17": [(2451, 2571)],
+    "chb05_22": [(2348, 2465)],
+    # chb06 (7 seizure files)
+    "chb06_01": [(1724, 1738), (7461, 7476), (13525, 13540)],
+    "chb06_04": [(327, 347), (6211, 6231)],
+    "chb06_09": [(12500, 12516)],
+    "chb06_10": [(10833, 10845)],
+    "chb06_13": [(506, 519)],
+    "chb06_18": [(7799, 7811)],
+    "chb06_24": [(9387, 9403)],
+    # chb08 (5 seizure files)
+    "chb08_02": [(2670, 2841)],
+    "chb08_05": [(2856, 3046)],
+    "chb08_11": [(2988, 3122)],
+    "chb08_13": [(2417, 2577)],
+    "chb08_21": [(2083, 2347)],
+    # chb10 (7 seizure files)
+    "chb10_12": [(6313, 6348)],
+    "chb10_20": [(6888, 6958)],
+    "chb10_27": [(2382, 2447)],
+    "chb10_30": [(3021, 3079)],
+    "chb10_31": [(3801, 3877)],
+    "chb10_38": [(4618, 4707)],
+    "chb10_89": [(1383, 1437)],
+    # chb14 (7 seizure files)
+    "chb14_03": [(1986, 2000)],
+    "chb14_04": [(1372, 1392), (2817, 2839)],
+    "chb14_06": [(1911, 1925)],
+    "chb14_11": [(1838, 1879)],
+    "chb14_17": [(3239, 3259)],
+    "chb14_18": [(1039, 1061)],
+    "chb14_27": [(2833, 2849)],
+    # chb20 (6 seizure files)
+    "chb20_12": [(94, 123)],
+    "chb20_13": [(1440, 1470), (2498, 2537)],
+    "chb20_14": [(1971, 2009)],
+    "chb20_15": [(390, 425), (1689, 1738)],
+    "chb20_16": [(2226, 2261)],
+    "chb20_68": [(1393, 1432)],
 }
 
 
-def load_subject_records(subject_id: str, use_mock: bool = False) -> List[Dict[str, Any]]:
+def parse_summary_file(summary_path: Path) -> Dict[str, List[tuple]]:
+    """Parse seizure timestamps dynamically from a CHB-MIT summary text file."""
+    import re
+    if not summary_path.exists():
+        return {}
+    content = summary_path.read_text(encoding="utf-8", errors="ignore")
+    blocks = re.split(r"File Name:\s*", content)
+    parsed: Dict[str, List[tuple]] = {}
+    for block in blocks[1:]:
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if not lines:
+            continue
+        fname_match = re.match(r"^([a-zA-Z0-9_+\-]+(?:\.edf)?)", lines[0])
+        if not fname_match:
+            continue
+        fname = fname_match.group(1)
+        rec_name = fname[:-4] if fname.lower().endswith(".edf") else fname
+        num_m = re.search(r"Number of Seizures in File:\s*(\d+)", block, re.IGNORECASE)
+        num_seizures = int(num_m.group(1)) if num_m else 0
+        if num_seizures == 0:
+            continue
+        starts = [int(s) for s in re.findall(r"Seizure\s*(?:\d*\s*)?Start Time:\s*(\d+)\s*seconds", block, re.IGNORECASE)]
+        ends = [int(e) for e in re.findall(r"Seizure\s*(?:\d*\s*)?End Time:\s*(\d+)\s*seconds", block, re.IGNORECASE)]
+        pairs = list(zip(starts, ends))
+        if pairs:
+            parsed[rec_name] = pairs
+    return parsed
+
+
+def load_subject_records(
+    subject_id: str,
+    use_mock: bool = False,
+    only_seizures: bool = True,
+) -> List[Dict[str, Any]]:
     if use_mock:
         return _generate_mock_subject(subject_id)
 
@@ -45,12 +135,27 @@ def load_subject_records(subject_id: str, use_mock: bool = False) -> List[Dict[s
     if not MNE_AVAILABLE:
         raise ImportError("MNE is required for EDF loading.")
 
+    # Check for summary file in subject dir to load any dynamic/new annotations
+    dynamic_annotations: Dict[str, List[tuple]] = {}
+    for summary_file in subject_dir.glob("*-summary.txt"):
+        dynamic_annotations.update(parse_summary_file(summary_file))
+
     records = []
     for edf_path in sorted(subject_dir.glob("*.edf")):
         record_name = edf_path.stem
+        # Priority: dynamic parsed summary -> static CHB_MIT_ANNOTATIONS -> empty list
+        raw_seizures = dynamic_annotations.get(
+            record_name,
+            CHB_MIT_ANNOTATIONS.get(record_name, [])
+        )
+        # If configured to only input files with seizures, skip files with 0 seizures
+        if only_seizures and not raw_seizures:
+            logger.info(f"Skipping non-seizure recording: {record_name}")
+            continue
+
         seizures = [
             {"onset_sec": s, "offset_sec": e}
-            for s, e in CHB_MIT_ANNOTATIONS.get(record_name, [])
+            for s, e in raw_seizures
         ]
         try:
             rec = _load_edf(edf_path, subject_id, record_name, seizures)

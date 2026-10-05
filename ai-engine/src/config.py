@@ -11,6 +11,13 @@ MODEL_DIR = BASE_DIR / "models" / "saved"
 for _d in [RAW_DIR, MOCK_DIR, PROC_DIR, MODEL_DIR]:
     _d.mkdir(parents=True, exist_ok=True)
 
+# Detect subject folders containing actual .edf recording files
+AVAILABLE_SUBJECTS = [
+    d.name for d in sorted(RAW_DIR.iterdir())
+    if d.is_dir() and any(d.glob("*.edf"))
+]
+SUBJECT_IDS = AVAILABLE_SUBJECTS if AVAILABLE_SUBJECTS else ["chb01", "chb02", "chb03"]
+
 SAMPLING_RATE = 256
 N_CHANNELS = 18
 

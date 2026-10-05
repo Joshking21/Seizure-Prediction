@@ -23,6 +23,7 @@ def build_dataset(
     subject_ids: List[str],
     use_mock: bool = False,
     force_rebuild: bool = False,
+    only_seizures: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
     cache_path = PROC_DIR / f"features_{'_'.join(subject_ids)}.npz"
 
@@ -33,7 +34,7 @@ def build_dataset(
     all_X, all_y = [], []
 
     for subj in subject_ids:
-        records = load_subject_records(subj, use_mock=use_mock)
+        records = load_subject_records(subj, use_mock=use_mock, only_seizures=only_seizures)
 
         for rec in tqdm(records, desc=f"  {subj} records", leave=False):
             windows_labels = preprocess_record(rec)

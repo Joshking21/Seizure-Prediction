@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
 
+from src.config import SUBJECT_IDS
 from src.dataset_builder import build_dataset, prepare_splits
 from src.train import train_model
 
@@ -19,11 +20,12 @@ logger = logging.getLogger("pipeline")
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--subjects", nargs="+", default=["chb01", "chb02"])
+    p.add_argument("--subjects", nargs="+", default=SUBJECT_IDS)
     p.add_argument("--mock", action="store_true")
     p.add_argument("--rebuild", action="store_true")
+    p.add_argument("--all-files", dest="only_seizures", action="store_false", help="Process non-seizure files too (default is only seizure recordings)")
     p.add_argument("--no-train", dest="train", action="store_false")
-    p.set_defaults(train=True)
+    p.set_defaults(train=True, only_seizures=True)
     return p.parse_args()
 
 
@@ -34,6 +36,7 @@ def main():
         subject_ids=args.subjects,
         use_mock=args.mock,
         force_rebuild=args.rebuild,
+        only_seizures=args.only_seizures,
     )
 
     splits = prepare_splits(X, y, balance=True)
