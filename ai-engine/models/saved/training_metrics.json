@@ -1,0 +1,26 @@
+{
+  "accuracy": 80.59,
+  "sensitivity": 88.99,
+  "specificity": 68.22,
+  "precision": 80.49,
+  "f1_score": 84.53,
+  "fpr_raw": 0.3178,
+  "fpr_per_hour": 457.6,
+  "auc_roc": 0.8796,
+  "auc_pr": 0.9056,
+  "confusion_matrix": [
+    [
+      307,
+      143
+    ],
+    [
+      73,
+      590
+    ]
+  ],
+  "tp": 590,
+  "tn": 307,
+  "fp": 143,
+  "fn": 73,
+  "classification_report": "              precision    recall  f1-score   support\n\n Inter-ictal     0.8079    0.6822    0.7398       450\n   Pre-ictal     0.8049    0.8899    0.8453       663\n\n    accuracy                         0.8059      1113\n   macro avg     0.8064    0.7861    0.7925      1113\nweighted avg     0.8061    0.8059    0.8026      1113\n"
+}

@@ -1,0 +1,17 @@
+{
+  "include": [
+    "ai-engine",
+    "backend"
+  ],
+  "exclude": [
+    "**/venv",
+    "**/node_modules"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownVariableType": false,
+  "reportGeneralTypeIssues": false,
+  "reportArgumentType": false
+}

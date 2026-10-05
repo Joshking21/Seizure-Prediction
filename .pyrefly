@@ -1,0 +1,4 @@
+[default]
+python_interpreter = C:\seizure-prediction\ai-engine\venv\Scripts\python.exe
+search_path = C:\seizure-prediction\ai-engine;C:\seizure-prediction\backend;C:\seizure-prediction
+disabled_diagnostics = bad-argument-type, missing-type-stubs, untyped-import, missing-module-source, unknown-argument-type
